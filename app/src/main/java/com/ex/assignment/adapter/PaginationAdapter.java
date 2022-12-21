@@ -1,6 +1,8 @@
 package com.ex.assignment.adapter;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,20 +17,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.ex.assignment.R;
 import com.ex.assignment.model.UnSplashPicture;
-import com.ex.assignment.model.UnSplashPicture;
 import com.ex.assignment.rec_view.AdapterListener;
+import com.ex.assignment.rec_view.BaseAdapter;
 
-import java.util.LinkedList;
-import java.util.List;
-
-
-public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class PaginationAdapter extends BaseAdapter<UnSplashPicture.Result> {
 
     private Context context;
-    private List<UnSplashPicture.Result> resultList;
-    private static final int LOADING = 0;
-    private static final int ITEM = 1;
-    private boolean isLoadingAdded = false;
+
     AdapterListener adapterListener;
 
     public void setAdapterListener(AdapterListener adapterListener) {
@@ -37,128 +32,32 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public PaginationAdapter(Context context) {
         this.context = context;
-        resultList = new LinkedList<>();
-    }
-
-    public void setResultList(UnSplashPicture resultList) {
-        if(resultList == null ||resultList.results == null) {
-            this.resultList.clear();
-            notifyDataSetChanged();
-            return;
-        }
-        this.resultList = resultList.results;
-        notifyDataSetChanged();
-    }
-
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        RecyclerView.ViewHolder viewHolder = null;
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-
-        switch (viewType) {
-            case ITEM:
-                View viewItem = inflater.inflate(R.layout.item_list, parent, false);
-                viewHolder = new ItemViewHolder(viewItem);
-                break;
-            case LOADING:
-                View viewLoading = inflater.inflate(R.layout.item_progress, parent, false);
-                viewHolder = new LoadingViewHolder(viewLoading);
-                break;
-        }
-        return viewHolder;
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
-        UnSplashPicture.Result item = resultList.get(position);
-        switch (getItemViewType(position)) {
-            case ITEM:
-                ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
-            //    movieViewHolder.movieTitle.setText(movie.getTitle());
-//                if (item == null) {
-//                    return;
-//                } else if (item.user == null) {
-//                    return;
-//                } else if (item.user.getName() == null) {
-//                    return;
-//                } else if (item.getAlt_description() == null) {
-//                    return;
-//                } else if (item.urls == null) {
-//                    return;
-//                } else if (item.getThumbnail() == null) {
-//                    return;
-//                }
-                Glide.with(context)
-                        .load(item.getThumbnail())
-                        .placeholder(R.drawable.image)
-                        .error(R.drawable.image)
-                        .apply(RequestOptions.centerCropTransform())
-                        .into(itemViewHolder.movieImage);
-
-                itemViewHolder.artistname.setText(item.getName());
-                itemViewHolder.artistname.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if(adapterListener!=null && item.user != null && item.user.portfolio_url != null && !item.user.portfolio_url.isEmpty())
-                            adapterListener.onItemClick(item.user.portfolio_url);
-                    }
-                });
-                itemViewHolder.description.setText(item.getAlt_description());
-                break;
-
-            case LOADING:
-                LoadingViewHolder loadingViewHolder = (LoadingViewHolder) holder;
-                loadingViewHolder.progressBar.setVisibility(View.VISIBLE);
-                break;
-        }
+    public RecyclerView.ViewHolder getViewHolder(View viewItem) {
+        return new ItemViewHolder(viewItem);
     }
 
     @Override
-    public int getItemCount() {
-        return resultList == null ? 0 : resultList.size();
+    protected void bindItem(ItemViewHolder itemViewHolder, UnSplashPicture.Result item) {
+        Glide.with(context)
+                .load(item.urls.full)
+                .placeholder(R.drawable.image)
+                .error(R.drawable.image)
+                .apply(RequestOptions.centerCropTransform())
+                .into(itemViewHolder.movieImage);
+
+        itemViewHolder.artistname.setText(item.getName());
+        itemViewHolder.artistname.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(adapterListener!=null && item.user != null && item.user.portfolio_url != null && !item.user.portfolio_url.isEmpty())
+                    adapterListener.onItemClick(item.user.portfolio_url);
+            }
+        });
+        itemViewHolder.description.setText(item.getAlt_description());
     }
-
-    @Override
-    public int getItemViewType(int position) {
-        return (position == resultList.size() - 1 && isLoadingAdded)||resultList.get(position).isEmpty() ? LOADING : ITEM ;
-    }
-
-    public void addLoadingFooter() {
-        isLoadingAdded = true;
-        add(new UnSplashPicture.Result());
-    }
-
-    public void removeLoadingFooter() {
-        isLoadingAdded = false;
-
-        int position = resultList.size() - 1;
-        if(position <0) return;
-        UnSplashPicture.Result result = getItem(position);
-
-        if (result != null) {
-            resultList.remove(position);
-            notifyItemRemoved(position);
-        }
-    }
-
-    public void add(UnSplashPicture.Result item) {
-        resultList.add(item);
-        notifyItemInserted(resultList.size() - 1);
-    }
-
-    public void addAll(List<UnSplashPicture.Result> moveResults) {
-        for (UnSplashPicture.Result result : moveResults) {
-            add(result);
-        }
-        notifyDataSetChanged();
-    }
-
-    public UnSplashPicture.Result getItem(int position) {
-        return resultList.get(position);
-    }
-
 
     public class ItemViewHolder extends RecyclerView.ViewHolder {
 
@@ -173,17 +72,16 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             artistname =  itemView.findViewById(R.id.artistname);
         }
     }
-
-    public class LoadingViewHolder extends RecyclerView.ViewHolder {
-
-        private ProgressBar progressBar;
-
-        public LoadingViewHolder(View itemView) {
-            super(itemView);
-            progressBar = (ProgressBar) itemView.findViewById(R.id.loadmore_progress);
-
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+        if(holder instanceof ItemViewHolder) {
+            Glide.with(context).clear(((ItemViewHolder) holder).movieImage);
         }
+      //  holder.unbind();
     }
+
+
 
 
 }

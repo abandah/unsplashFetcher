@@ -53,7 +53,9 @@ public class PaginationRecyclerView extends RecyclerView {
     }
 
     private void initRecyclerView() {
+        setHasFixedSize(true);
         paginationAdapter = new PaginationAdapter(getContext());
+       // paginationAdapter.setHasStableIds(true);
         setAdapter(paginationAdapter);
         linearLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         setLayoutManager(linearLayoutManager);
@@ -61,7 +63,7 @@ public class PaginationRecyclerView extends RecyclerView {
     }
 
     public void resetRecyclerView() {
-        paginationAdapter.setResultList(null);
+        paginationAdapter.setmItems(null);
         currentPage = PAGE_START;
         isLastPage = false;
         isLoading = false;
@@ -96,7 +98,7 @@ public class PaginationRecyclerView extends RecyclerView {
     private void searchForPictures(int page,String query) {
         if(completionListener!= null && page == 1) completionListener.onProgress();
         if(query == null || query.isEmpty()){
-            paginationAdapter.setResultList(null);
+            paginationAdapter.setmItems(null);
             return;
         }
         RetrofitControler.getCaller().create(API.class).searchForPic(page, query).enqueue(new Callback<UnSplashPicture>() {
@@ -172,6 +174,7 @@ public class PaginationRecyclerView extends RecyclerView {
         AlertDialog alert = builder.create();
         alert.show();
     }
+
 
     public void startSearching(String query) {
       //  if(completionListener!= null) completionListener.onProgress();
